@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-one
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: common-app
+      deployment: deployment-one
+  template:
+    metadata:
+      labels:
+        app: common-app
+        deployment: deployment-one
+spec:
+      containers:
+      - name: website-a
+        image: nginx
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: html
+          mountPath: /usr/share/nginx/html
+        - name: custom-index
+          mountPath: /usr/share/nginx/html/index.html
+          subPath: index.html
+      volumes:
+      - name: html
+        emptyDir: {}
+      - name: custom-index
+        configMap:
+          name: deployment-one-configmap
