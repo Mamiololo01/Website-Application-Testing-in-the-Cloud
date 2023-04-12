@@ -76,106 +76,32 @@ Per our use-case, we are going to create two deployments both are accomplishing 
 We create these .yaml files using the VIM editor in the same way we did with our configmaps in the previous step. Each YAML represents a separate deployment but accomplishes the same task independently save for our different Webpages that we are testing:
 
 Each YAML specifies the API version and kind of Kubernetes object being created (a Deployment).
+
 Each gives the Deployment a name (“deployment-one” or “deployment-two”).
+
 Each define the desired number of replicas for the deployment (2 pods in each deployment).
+
 Each specifies a selector to identify which pods the deployment is responsible for (based on the label “app: deployment-one” or “deployment-two”).
+
 Each defines a template for the Pods that should be created by the deployment.
+
 Each defines one container named either “website-a” or “website-b”, using the official nginx Docker image.
+
 Each template exposes port 80.
+
 Each mounts a volume called “html” at the path /usr/share/nginx/html.
+
 Each defines a volume called “html” that gets its contents from a configmap called “deployment-one-configmap”.
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: deployment-one
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: common-app
-      deployment: deployment-one
-  template:
-    metadata:
-      labels:
-        app: common-app
-        deployment: deployment-one
-spec:
-      containers:
-      - name: website-a
-        image: nginx
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: html
-          mountPath: /usr/share/nginx/html
-        - name: custom-index
-          mountPath: /usr/share/nginx/html/index.html
-          subPath: index.html
-      volumes:
-      - name: html
-        emptyDir: {}
-      - name: custom-index
-        configMap:
-          name: deployment-one-configmap
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: deployment-two
-  labels:
-    app: common-app
-    deployment: deployment-two
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: common-app
-      deployment: deployment-two
-  template:
-    metadata:
-      labels:
-        app: common-app
-        deployment: deployment-two
- spec:
-      containers:
-      - name: website-b
-        image: nginx
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: html
-          mountPath: /usr/share/nginx/html
-        - name: custom-index
-          mountPath: /usr/share/nginx/html/index.html
-          subPath: index.html
-      volumes:
-      - name: html
-        emptyDir: {}
-      - name: custom-index
-        configMap:
-          name: deployment-two-configmap
 
-YAML for deployment-one
 
-YAML for deployment-two
 Step 5 — Creating our Nginix-Service YAML
+
 Our nginix-service.yaml file creates a load balancing service that forwards traffic to any pod deployments that are using a label under app: "common-app", on port 80, which if you remember from our previous step, we also used so that when TCP traffic enters our Load Balancer, our nginix-service will automatically route traffic between our website-a and website-b webservers.
 
 The service is exposed externally using an external load balancer. This allows clients to access the pods through a stable, externally accessible IP address or hostname, regardless of how many replicas of the pods are running or where they are located in the cluster:
 
 Once again, we create this .yaml file using the VIM editor in the same way we did with our ConfigMap and deployments files in the previous step:
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: nginx-service
-spec:
-  selector:
-    app: common-app
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: LoadBalancer
 
 Step 6 — Creating our Persistent Storage & Claim Manifests
 The next yaml configuration files that we need to define is for our persistent volume storage and our pod claims to that persistent volume.
@@ -226,31 +152,6 @@ If a suitable PV is not found, Kubernetes will dynamically provision a new PV th
 Step 7 — Creating our CronJob YAML
 Our last yaml defines a CronJob that runs a daily batch job to deploy Kubernetes objects using microk8s kubectl apply. This YAML file allows us to automate the deployment of Kubernetes objects on a daily basis using a CronJob
 
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: daily-deployments-cronjob
-spec:
-  schedule: "0 7 * * *"
-  jobTemplate:
-    spec:
-      template:
-        metadata:
-          labels:
-            app: my-app
-        spec:
-          containers:
-          - name: my-container
-            image: busybox
-            command: ['sh', '-c', 'microk8s kubectl apply -f /mnt/deployment-one-configmap.yaml && microk8s kubectl apply -f /mnt/deployment-two-configmap.yaml && microk8s kubectl apply -f /mnt/deployment-one.yaml && microk8s kubectl apply -f /mnt/deployment-two.yaml && microk8s kubectl apply -f /mnt/service.yaml']
-            volumeMounts:
-            - name: manifests
-              mountPath: /mnt
-          restartPolicy: OnFailure
-          volumes:
-          - name: manifests
-            persistentVolumeClaim:
-              claimName: custom-pvc
 
 CronJob YAML
 Step 8— Applying our YAMLs to our Kubernetes Cluster
