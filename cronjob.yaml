@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: daily-deployments-cronjob
+spec:
+  schedule: "0 7 * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: my-app
+        spec:
+          containers:
+          - name: my-container
+            image: busybox
+            command: ['sh', '-c', 'microk8s kubectl apply -f /mnt/deployment-one-configmap.yaml && microk8s kubectl apply -f /mnt/deployment-two-configmap.yaml && microk8s kubectl apply -f /mnt/deployment-one.yaml && microk8s kubectl apply -f /mnt/deployment-two.yaml && microk8s kubectl apply -f /mnt/service.yaml']
+            volumeMounts:
+            - name: manifests
+              mountPath: /mnt
+          restartPolicy: OnFailure
+          volumes:
+          - name: manifests
+            persistentVolumeClaim:
+              claimName: custom-pvc
