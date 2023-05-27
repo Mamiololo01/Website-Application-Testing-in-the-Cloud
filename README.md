@@ -17,9 +17,13 @@ In this walk-through, we will create two Kubernetes deployments with MicroK8s. E
 Pre-Requisites
 
 An AWS Account
+
 MicroK8s already installed on your EC2 Instance
+
 Knowledge of Kubernetes and kubectl
+
 Experience with containerization and Docker
+
 Let’s get started:
 
 Step 1 — Setting up your EC Instance & Installing your Kubernetes Environment
@@ -39,6 +43,7 @@ Step 3 — Creating ConfigMap files for Each Deployment
 Our ConfigMap files are YAML that point to our custom .html files. One ConfigMap per .html file. To create our first YAML:
 
 vim deployment-one-configmap # Creates a new empty file called "deployment-one-configmap.yaml
+
 In our VIM editor, we construct our YAML:
 
 apiVersion: v1
@@ -54,6 +59,7 @@ We hit [CTRL+C] and then type “:wq!” to save our changes and exit VIM.
 We create our second ConfigMap that points to our other .HTML for our second deployment in the same way we created our first:
 
 vim deployment-two-configmap #Creates a new empty file called "deployment-one-configmap.yaml
+
 Again in VIM, we construct our second YAML:
 
 apiVersion: v1
@@ -67,6 +73,7 @@ data:
 Now we need to apply our configmaps to our cluster:
 
 microk8s kubectl apply -f deployment-one-configmap
+
 microk8s kubectl apply -f deployment-two-configmap
 
 Step 4— Creating our Deployment YAMLs
@@ -104,6 +111,7 @@ Once again, we create this .yaml file using the VIM editor in the same way we di
 
 
 Step 6 — Creating our Persistent Storage & Claim Manifests
+
 The next yaml configuration files that we need to define is for our persistent volume storage and our pod claims to that persistent volume.
 
 Our first YAML will define a cluster-level resource while the latter represents a request for claim on that cluster storage by a particular pod.
@@ -150,11 +158,11 @@ If a suitable persistent volume is found, it is bound to the claim and made avai
 If a suitable PV is not found, Kubernetes will dynamically provision a new PV that matches the PVC’s requirements.
 
 Step 7 — Creating our CronJob YAML
+
 Our last yaml defines a CronJob that runs a daily batch job to deploy Kubernetes objects using microk8s kubectl apply. This YAML file allows us to automate the deployment of Kubernetes objects on a daily basis using a CronJob
 
-
-CronJob YAML
 Step 8— Applying our YAMLs to our Kubernetes Cluster
+
 We run the following commands, in order to apply our persistent storage, persistent storage claim, and CronJob yamls to our cluster:
 
 microk8s kubectl apply -f persistent-storage.yaml
@@ -162,18 +170,25 @@ microk8s kubectl apply -f persistent-storage-claim.yaml
 microk8s kubectl apply -f cronjob.yaml
 
 We have successfully applied our YAMLs to our cluster
+
 Step 9— Testing our Deployment & Verifying our Results
+
 Now, we can deploy our web servers. One for each of the websites that our agency will be testing and one for our Load Balancer:
 
 microk8s kubectl apply -f deployment-one.yaml
+
 microk8s kubectl apply -f deployment-two.yaml
+
 microk8s kubectl apply -f nginx-service.yaml
+
 We can verify the deployments and the number of pods using the following commands:
 
 microk8s kubectl get deployments
+
 microk8s kubectl get pods
 
 Both our deployments as well as the number of pods per deployment were successfully launched.
+
 In order to test public traffic to our deployments, we need to get the IP address from our Load Balancer using the following command:
 
 microk8s kubectl get svc nginx-service
@@ -181,10 +196,12 @@ microk8s kubectl get svc nginx-service
 We can use the ‘curl’ command to validate that you eventually see the index.html pages from both deployment one and deployment 2.
 
 for i in {1..10}; do curl 10.152.183.74; done
+
 If we see both pages, we can have confidence that when visitors visit our webpage, they will be randomly routed between our two pages.
 
 
 Victory is sweet for the captain!
+
 Nice work! You’re successfully created a Kubernetes cluster deployment for website A/B testing!
 
 
